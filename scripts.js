@@ -1,15 +1,31 @@
 import { books, authors, genres, BOOKS_PER_PAGE } from './data.js';
-import { createPreviewsFragment, initializeDropdowns } from './render.js';
 import { setTheme } from './theme.js';
 import { filterBooks } from './filters.js';
+import './book-preview.js';
+import './genre-dropdown.js';
+import './author-dropdown.js';
 
 let page = 1;
 let matches = books;
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelector('[data-list-items]').appendChild(createPreviewsFragment(books.slice(0, BOOKS_PER_PAGE)));
-    initializeDropdowns(genres, authors);
+function renderBooks(bookList, container, clear = true) {
+    if (clear) container.innerHTML = '';
 
+    bookList.forEach(({ id, title, author, image }) => {
+        const bookPreview = document.createElement('book-preview');
+        bookPreview.setAttribute('id', id);
+        bookPreview.setAttribute('title', title);
+        bookPreview.setAttribute('author', author);
+        bookPreview.setAttribute('image', image);
+        container.appendChild(bookPreview);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    const bookContainer = document.querySelector('[data-list-items]');
+    renderBooks(books.slice(0, BOOKS_PER_PAGE), bookContainer);
+    
     const theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day';
     setTheme(theme);
     
@@ -19,13 +35,17 @@ document.addEventListener('DOMContentLoaded', () => {
 // Search form submit handler
 document.querySelector('[data-search-form]').addEventListener('submit', (event) => {
     event.preventDefault();
-    const formData = new FormData(event.target);
-    const filters = Object.fromEntries(formData);
+    const genreDropdown = document.querySelector('genre-dropdown');
+    const authorDropdown = document.querySelector('author-dropdown');
+    const filters = {
+        title: document.querySelector('[data-search-title]').value,
+        genre: genreDropdown.value,
+        author: authorDropdown.value
+    };
     matches = filterBooks(filters, books);
     page = 1;
 
-    document.querySelector('[data-list-items]').innerHTML = '';
-    document.querySelector('[data-list-items]').appendChild(createPreviewsFragment(matches.slice(0, BOOKS_PER_PAGE)));
+    renderBooks(matches.slice(0, BOOKS_PER_PAGE), document.querySelector('[data-list-items]'));
 
     document.querySelector('[data-list-button]').disabled = matches.length <= BOOKS_PER_PAGE;
     document.querySelector('[data-list-button]').innerHTML = `
@@ -50,24 +70,22 @@ document.querySelector('[data-list-button]').addEventListener('click', () => {
 
 // Show book details in overlay on click
 document.querySelector('[data-list-items]').addEventListener('click', (event) => {
-    const pathArray = Array.from(event.composedPath());
-    let active = null;
+    
+    if (event.target.closest('book-preview')) {
+        const previewId = event.target.closest('book-preview').getAttribute('id');
+        const active = books.find(book => book.id === previewId);  
+    
 
-    for (const node of pathArray) {
-        if (active) break;
-        if (node?.dataset?.preview) {
-            active = books.find(book => book.id === node.dataset.preview);
+        if (active) {
+            document.querySelector('[data-list-active]').open = true;
+            document.querySelector('[data-list-blur]').src = active.image;
+            document.querySelector('[data-list-image]').src = active.image;
+            document.querySelector('[data-list-title]').innerText = active.title;
+            document.querySelector('[data-list-subtitle]').innerText = `${authors[active.author]} (${new Date(active.published).getFullYear()})`;
+            document.querySelector('[data-list-description]').innerText = active.description;
         }
     }
 
-    if (active) {
-        document.querySelector('[data-list-active]').open = true;
-        document.querySelector('[data-list-blur]').src = active.image;
-        document.querySelector('[data-list-image]').src = active.image;
-        document.querySelector('[data-list-title]').innerText = active.title;
-        document.querySelector('[data-list-subtitle]').innerText = `${authors[active.author]} (${new Date(active.published).getFullYear()})`;
-        document.querySelector('[data-list-description]').innerText = active.description;
-    }
 });
 
 // Theme change handler
