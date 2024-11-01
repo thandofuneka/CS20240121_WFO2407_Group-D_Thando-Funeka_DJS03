@@ -1,10 +1,16 @@
-import { books, authors, genres } from './data.js';
-
-export function filterBooks(filters) {
+export function filterBooks(filters, books) {
     return books.filter((book) => {
-        const matchesTitle = !filters.title || book.title.toLowerCase().includes(filters.title.toLowerCase());
-        const matchesAuthor = filters.author === 'any' || book.author === authors[filters.author];
-        const matchesGenre = filters.genre === 'any' || book.genres.includes(genres[filters.genre]);
-        return matchesTitle && matchesAuthor && matchesGenre;
+        let genreMatch = filters.genre === 'any';
+
+        for (const singleGenre of book.genres) {
+            if (genreMatch) break;
+            if (singleGenre === filters.genre) { genreMatch = true }
+        }
+
+        return (
+            (filters.title.trim() === '' || book.title.toLowerCase().includes(filters.title.toLowerCase())) && 
+            (filters.author === 'any' || book.author === filters.author) && 
+            genreMatch
+        );
     });
 }
