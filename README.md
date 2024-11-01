@@ -8,7 +8,7 @@ The "Book Connect" project provides an opportunity for students to refine a full
 
 #### Report
 
-- Had to use [Javascript.info] <https://javascript.info/custom-elements> to learn the format
+- Had to use [Javascript.info](<https://javascript.info/custom-elements>) to learn the format
 - It was okay to change it into web components
 - I struggled with changing the script.js to add the new web components 
 - I have a bug of the books not showing and I checked the console and I had forgotten to add the renderBooks function 
